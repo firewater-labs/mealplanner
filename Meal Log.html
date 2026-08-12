@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Log</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px; color: #222; background: #f4f1e8; }
+  h1 { color: #0f4526; margin-bottom: 4px; }
+  h2 { color: #0f4526; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 32px; }
+  .updated { color: #7a7267; font-size: 13px; margin-top: 0; }
+  .hint { color: #7a7267; font-size: 12px; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 12px; }
+  .panel { background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+</style>
+</head>
+<body>
+<h1>Meal Log</h1>
+<p class="updated">Last updated: 8/11/2026, 10:48:07 PM</p>
+
+<h2>Past 7 Days</h2>
+<div class="panel"><p style="color:#7a7267;font-size:14px;">No entries.</p></div>
+
+<h2>Full History</h2>
+<div class="panel"><p style="color:#7a7267;font-size:14px;">No entries.</p></div>
+
+<h2>Current Meal List (18)</h2>
+<div class="panel"><ul style="font-size:14px;line-height:1.7;"><li>Quiche (Broccoli, Sweet Potato, Mushroom, Spinach or Cheese)</li><li>Tofu with rice or rice noodles, green veg and peanut or garlic/ginger sauce</li><li>Japchae with protein (Tofu, Chicken), spinach, garlic, edamame</li><li>Curry fried rice w/mushrooms, spinach, tofu, carrots, corn, …</li><li>Farro and beet salad with tofu/protein</li><li>Pasta and meatballs or mozzarella</li><li>Green curry poof soup</li><li>Red or green curry fried rice</li><li>Tacos w/black beans and plantains</li><li>Dirty rice and protein and salad or veggie</li><li>Pizza - regular + blue cheese/pear</li><li>Risotto and broccoli or squash or green beans</li><li>Impossible Burgers, potatoes (roasted or boiled) and vegetable</li><li>Veggie chili and cheese grits</li><li>Vegetarian Lasagna</li><li>Enchiladas (spinach, corn, squash, carrots)</li><li>Sweet potatoes, Sausage and Kale</li><li>Lentils with carrots, potatoes and green veggie</li></ul></div>
+
+<p class="hint">This file is the data store for Meal Planner.html. Keep it in the same folder and don't rename it or hand-edit the block below — the planner reads and rewrites it automatically.</p>
+
+<script type="application/json" id="meal-planner-data">
+{
+  "meals": [
+    {
+      "id": 1,
+      "name": "Quiche (Broccoli, Sweet Potato, Mushroom, Spinach or Cheese)"
+    },
+    {
+      "id": 2,
+      "name": "Tofu with rice or rice noodles, green veg and peanut or garlic/ginger sauce"
+    },
+    {
+      "id": 3,
+      "name": "Japchae with protein (Tofu, Chicken), spinach, garlic, edamame"
+    },
+    {
+      "id": 4,
+      "name": "Curry fried rice w/mushrooms, spinach, tofu, carrots, corn, …"
+    },
+    {
+      "id": 5,
+      "name": "Farro and beet salad with tofu/protein"
+    },
+    {
+      "id": 6,
+      "name": "Pasta and meatballs or mozzarella"
+    },
+    {
+      "id": 7,
+      "name": "Green curry poof soup"
+    },
+    {
+      "id": 8,
+      "name": "Red or green curry fried rice"
+    },
+    {
+      "id": 9,
+      "name": "Tacos w/black beans and plantains"
+    },
+    {
+      "id": 10,
+      "name": "Dirty rice and protein and salad or veggie"
+    },
+    {
+      "id": 11,
+      "name": "Pizza - regular + blue cheese/pear"
+    },
+    {
+      "id": 12,
+      "name": "Risotto and broccoli or squash or green beans"
+    },
+    {
+      "id": 13,
+      "name": "Impossible Burgers, potatoes (roasted or boiled) and vegetable"
+    },
+    {
+      "id": 14,
+      "name": "Veggie chili and cheese grits"
+    },
+    {
+      "id": 15,
+      "name": "Vegetarian Lasagna"
+    },
+    {
+      "id": 16,
+      "name": "Enchiladas (spinach, corn, squash, carrots)"
+    },
+    {
+      "id": 17,
+      "name": "Sweet potatoes, Sausage and Kale"
+    },
+    {
+      "id": 18,
+      "name": "Lentils with carrots, potatoes and green veggie"
+    }
+  ],
+  "log": [],
+  "cooldownDays": 3,
+  "updatedAt": "2026-08-11T22:48:07.940Z"
+}
+</script>
+</body>
+</html>

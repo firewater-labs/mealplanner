@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Planner</title>
+<style>
+  :root {
+    --green: #1b6b3a;
+    --green-dark: #0f4526;
+    --red: #b5342b;
+    --ink: #222;
+    --paper: #fdfaf3;
+    --muted: #7a7267;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(180deg, #0f4526 0%, #14532d 220px, #f4f1e8 220px, #f4f1e8 100%);
+    color: var(--ink);
+    padding-bottom: 60px;
+  }
+  header {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 28px 24px 10px;
+    color: #fff;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 28px;
+    letter-spacing: 0.5px;
+  }
+  header p {
+    margin: 0;
+    color: #d9e8dc;
+    font-size: 14px;
+  }
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  section.panel {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    padding: 24px;
+    margin-top: 20px;
+  }
+  section.panel h2 {
+    margin: 0 0 14px;
+    font-size: 17px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--green-dark);
+  }
+  section.panel.disabled { opacity: 0.5; pointer-events: none; }
+
+  .file-status-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .status-dot.ok { background: var(--green); }
+  .status-dot.warn { background: #d99a1b; }
+  .status-dot.off { background: #bbb; }
+  .status-text { font-size: 14px; }
+  .status-text b { font-weight: 700; }
+  .file-note { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+
+  .draw-area {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .draw-controls {
+    flex: 1;
+    min-width: 220px;
+  }
+  .draw-controls p.note {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 10px 0 16px;
+  }
+  .btn {
+    display: inline-block;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 0 8px 8px 0;
+  }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-secondary { background: #eee7d8; color: var(--ink); }
+  .btn-secondary:hover { background: #ded4bb; }
+  .btn-danger { background: #f4d9d6; color: var(--red); }
+  .btn-danger:hover { background: #eec3bd; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Playing card */
+  .card {
+    width: 210px;
+    height: 296px;
+    background: #fffdf7;
+    border: 1px solid #d8d2c2;
+    border-radius: 14px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.16);
+    position: relative;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-shrink: 0;
+    transition: opacity .2s, filter .2s;
+  }
+  .card.big { width: 240px; height: 336px; }
+  .card .corner {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .card .corner.bottom { align-self: flex-end; transform: rotate(180deg); }
+  .card.red .corner, .card.red .center .suit-bg { color: var(--red); }
+  .card.black .corner, .card.black .center .suit-bg { color: #262626; }
+  .card .center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6px 4px;
+    position: relative;
+  }
+  .card .center .suit-bg {
+    position: absolute;
+    font-size: 64px;
+    opacity: 0.08;
+  }
+  .card .meal-name {
+    font-size: 13px;
+    line-height: 1.35;
+    color: #2b2b2b;
+    position: relative;
+    z-index: 1;
+  }
+  .card.unavailable { opacity: 0.4; filter: grayscale(60%); }
+  .card .avail-note {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 4px;
+  }
+  .card .del-btn {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    background: none;
+    border: none;
+    color: #bbb;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+  }
+  .card .del-btn:hover { color: var(--red); }
+
+  .deck-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 18px;
+    margin-top: 4px;
+  }
+  .deck-grid .card { width: 100%; height: 260px; }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .settings-row label { font-size: 14px; font-weight: 600; }
+  input[type=range] { width: 220px; }
+  .cooldown-val { font-weight: 700; color: var(--green-dark); min-width: 60px; }
+
+  .add-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .add-row input[type=text] {
+    flex: 1;
+    min-width: 240px;
+    padding: 10px 12px;
+    border: 1px solid #d8d2c2;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+
+  table.log-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.log-table th, table.log-table td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee3d0;
+  }
+  table.log-table th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+  table.log-table td.date-col { white-space: nowrap; color: var(--muted); width: 130px; }
+  .log-empty { color: var(--muted); font-size: 14px; padding: 8px 0; }
+
+  .banner {
+    background: #fdf2df;
+    border: 1px solid #ecd6a3;
+    color: #6b5219;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .banner.error { background: #fbe4e1; border-color: #e6b3ac; color: #7a2a1f; }
+  details summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--green-dark);
+    font-weight: 600;
+    margin-top: 6px;
+  }
+  .stat-row {
+    display: flex;
+    gap: 22px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .stat-row b { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍽️ Meal Planner</h1>
+  <p>Draws a meal at random, skips anything used too recently, and keeps a dated log. Works on desktop or iPhone — see Save Your Data below.</p>
+</header>
+
+<main>
+
+  <section class="panel" id="recovery-panel" style="display:none;">
+    <h2>Recovered Changes</h2>
+    <div id="recovery-banner"></div>
+  </section>
+
+  <section class="panel" id="sync-panel">
+    <h2>Save Your Data</h2>
+    <div id="sync-banner"></div>
+    <div class="add-row">
+      <button class="btn btn-primary" id="export-btn">Export Data File</button>
+      <button class="btn btn-secondary" id="import-btn">Import Data File</button>
+      <input type="file" id="import-file-input" accept=".html,text/html" style="display:none;">
+    </div>
+    <p class="file-note">Works in any browser, including iPhone. <b>Export</b> saves (or shares to Google Drive) a copy of your meals and log. <b>Import</b> loads a previously exported file back in. Use the same filename each time — for example, save it over <b>Meal Log.html</b> in this folder — so you're always continuing the same running log.</p>
+  </section>
+
+  <section class="panel" id="file-panel">
+    <h2>Auto-Save (Chrome/Edge on a computer)</h2>
+    <div class="file-status-row">
+      <span id="file-status-text" class="status-text"></span>
+      <span id="file-actions"></span>
+    </div>
+    <div id="file-banner"></div>
+    <p class="file-note">Optional. When connected, this saves to <b>Meal Log.html</b> automatically after every change — no need to Export. Not available on iPhone; use Import/Export above instead.</p>
+  </section>
+
+  <section class="panel" id="draw-panel">
+    <h2>Today's Meal</h2>
+    <div class="draw-area">
+      <div id="today-card-slot"></div>
+      <div class="draw-controls">
+        <div id="draw-note-banner"></div>
+        <div id="draw-buttons"></div>
+        <p class="note" id="draw-note"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="settings-panel">
+    <h2>Settings</h2>
+    <div class="settings-row">
+      <label for="cooldown-slider">Don't repeat a meal within</label>
+      <input type="range" id="cooldown-slider" min="1" max="7" step="1">
+      <span class="cooldown-val"><span id="cooldown-val-text"></span> day<span id="cooldown-plural"></span></span>
+    </div>
+  </section>
+
+  <section class="panel" id="add-panel">
+    <h2>Add a Meal</h2>
+    <div class="add-row">
+      <input type="text" id="new-meal-input" placeholder="e.g. Shrimp tacos with cabbage slaw">
+      <button class="btn btn-primary" id="add-meal-btn">Add to List</button>
+    </div>
+  </section>
+
+  <section class="panel" id="deck-panel">
+    <h2>The Deck</h2>
+    <div class="stat-row" id="deck-stats"></div>
+    <div class="deck-grid" id="deck-grid"></div>
+  </section>
+
+  <section class="panel" id="log-panel">
+    <h2>Past 7 Days</h2>
+    <div id="recent-log"></div>
+    <details>
+      <summary>Show full history</summary>
+      <div id="full-log" style="margin-top:10px;"></div>
+    </details>
+  </section>
+
+</main>
+
+<script>
+(function() {
+  const FS_SUPPORTED = ('showSaveFilePicker' in window);
+  const IDB_KEY = 'dataFileHandle';
+
+  const DEFAULT_MEALS = [
+    "Quiche (Broccoli, Sweet Potato, Mushroom, Spinach or Cheese)",
+    "Tofu with rice or rice noodles, green veg and peanut or garlic/ginger sauce",
+    "Japchae with protein (Tofu, Chicken), spinach, garlic, edamame",
+    "Curry fried rice w/mushrooms, spinach, tofu, carrots, corn, …",
+    "Farro and beet salad with tofu/protein",
+    "Pasta and meatballs or mozzarella",
+    "Green curry poof soup",
+    "Red or green curry fried rice",
+    "Tacos w/black beans and plantains",
+    "Dirty rice and protein and salad or veggie",
+    "Pizza - regular + blue cheese/pear",
+    "Risotto and broccoli or squash or green beans",
+    "Impossible Burgers, potatoes (roasted or boiled) and vegetable",
+    "Veggie chili and cheese grits",
+    "Vegetarian Lasagna",
+    "Enchiladas (spinach, corn, squash, carrots)",
+    "Sweet potatoes, Sausage and Kale",
+    "Lentils with carrots, potatoes and green veggie"
+  ];
+
+  const SUITS = ['♠', '♥', '♦', '♣'];
+  const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+  let meals = DEFAULT_MEALS.map((name, i) => ({ id: i + 1, name }));
+  let log = [];
+  let cooldownDays = 3;
+  let fileHandle = null;
+  let lastRelaxed = false;
+  let sessionExcluded = new Set();
+  let dirty = false;
+  let previewPick = null; // meal currently shown but NOT yet written to the log
+  const BACKUP_KEY = 'mealPlanner_crashBackup_v1';
+
+  // ---- IndexedDB (stores the FileSystemFileHandle so we can reconnect without re-picking) ----
+  function idbOpen() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('mealPlannerFS', 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore('handles'); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbGet(key) {
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('handles', 'readonly');
+      const req = tx.objectStore('handles').get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbSet(key, value) {
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('handles', 'readwrite');
+      tx.objectStore('handles').put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function idbDelete(key) {
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('handles', 'readwrite');
+      tx.objectStore('handles').delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  // ---- date helpers (local time, not UTC) ----
+  function todayStr() { return dateToStr(new Date()); }
+  function dateToStr(d) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  function strToDate(s) { return new Date(s + 'T00:00:00'); }
+  function daysBetween(dateStrEarlier, dateStrLater) {
+    const ms = strToDate(dateStrLater) - strToDate(dateStrEarlier);
+    return Math.round(ms / 86400000);
+  }
+  function addDays(dateStr, n) {
+    const d = strToDate(dateStr);
+    d.setDate(d.getDate() + n);
+    return dateToStr(d);
+  }
+  function formatDisplayDate(dateStr) {
+    const d = strToDate(dateStr);
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  // ---- card visuals (decorative only) ----
+  function suitFor(id) { return SUITS[(id - 1) % 4]; }
+  function rankFor(id) { return RANKS[(id - 1) % 13]; }
+  function isRedSuit(suit) { return suit === '♥' || suit === '♦'; }
+
+  function lastUsedDate(mealId) {
+    let latest = null;
+    for (const entry of log) {
+      if (entry.mealId === mealId) {
+        if (!latest || entry.date > latest) latest = entry.date;
+      }
+    }
+    return latest;
+  }
+  function isEligible(meal, today) {
+    const last = lastUsedDate(meal.id);
+    if (!last) return true;
+    return daysBetween(last, today) >= cooldownDays;
+  }
+
+  function buildCardEl(meal, opts) {
+    opts = opts || {};
+    const suit = suitFor(meal.id);
+    const rank = rankFor(meal.id);
+    const red = isRedSuit(suit);
+    const today = todayStr();
+    const eligible = isEligible(meal, today);
+
+    const card = document.createElement('div');
+    card.className = 'card ' + (red ? 'red' : 'black') + (opts.big ? ' big' : '') + (!eligible && !opts.ignoreAvailability ? ' unavailable' : '');
+
+    const topCorner = document.createElement('div');
+    topCorner.className = 'corner';
+    topCorner.textContent = rank + suit;
+    card.appendChild(topCorner);
+
+    const center = document.createElement('div');
+    center.className = 'center';
+    const suitBg = document.createElement('div');
+    suitBg.className = 'suit-bg';
+    suitBg.textContent = suit;
+    const nameEl = document.createElement('div');
+    nameEl.className = 'meal-name';
+    nameEl.textContent = meal.name;
+    center.appendChild(suitBg);
+    center.appendChild(nameEl);
+    card.appendChild(center);
+
+    const bottomCorner = document.createElement('div');
+    bottomCorner.className = 'corner bottom';
+    bottomCorner.textContent = rank + suit;
+    card.appendChild(bottomCorner);
+
+    if (opts.showDelete) {
+      const del = document.createElement('button');
+      del.className = 'del-btn';
+      del.textContent = '✕';
+      del.title = 'Remove from list';
+      del.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeMeal(meal.id);
+      });
+      card.appendChild(del);
+    }
+
+    if (opts.showAvailability && !eligible) {
+      const last = lastUsedDate(meal.id);
+      const availOn = addDays(last, cooldownDays);
+      const note = document.createElement('div');
+      note.className = 'avail-note';
+      note.textContent = 'Again on ' + formatDisplayDate(availOn);
+      const wrap = document.createElement('div');
+      wrap.appendChild(card);
+      wrap.appendChild(note);
+      return wrap;
+    }
+
+    return card;
+  }
+
+  // ---- data file read/write ----
+  function parseEmbeddedData(html) {
+    const match = html.match(/<script type="application\/json" id="meal-planner-data">([\s\S]*?)<\/script>/);
+    if (!match) return null;
+    try { return JSON.parse(match[1]); } catch (e) { return null; }
+  }
+
+  function renderLogTableHtml(entries) {
+    if (!entries.length) return '<p style="color:#7a7267;font-size:14px;">No entries.</p>';
+    const rows = entries.map(e =>
+      `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee3d0;white-space:nowrap;color:#7a7267;">${formatDisplayDate(e.date)}</td><td style="padding:6px 10px;border-bottom:1px solid #eee3d0;">${escapeHtml(e.mealName)}</td></tr>`
+    ).join('');
+    return `<table style="width:100%;border-collapse:collapse;font-size:14px;"><thead><tr><th style="text-align:left;padding:6px 10px;color:#7a7267;font-size:12px;text-transform:uppercase;">Date</th><th style="text-align:left;padding:6px 10px;color:#7a7267;font-size:12px;text-transform:uppercase;">Meal</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  function buildDataFileHtml() {
+    const today = todayStr();
+    const payload = { meals, log, cooldownDays, updatedAt: new Date().toISOString() };
+    let json = JSON.stringify(payload, null, 2).replace(/<\/(script)/gi, '<\\/$1');
+
+    const recent = log
+      .filter(e => daysBetween(e.date, today) <= 6 && daysBetween(e.date, today) >= 0)
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+    const all = log.slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+    const mealListHtml = meals.length
+      ? '<ul style="font-size:14px;line-height:1.7;">' + meals.map(m => `<li>${escapeHtml(m.name)}</li>`).join('') + '</ul>'
+      : '<p style="color:#7a7267;font-size:14px;">No meals on the list.</p>';
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Log</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 720px; margin: 0 auto; padding: 24px; color: #222; background: #f4f1e8; }
+  h1 { color: #0f4526; margin-bottom: 4px; }
+  h2 { color: #0f4526; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 32px; }
+  .updated { color: #7a7267; font-size: 13px; margin-top: 0; }
+  .hint { color: #7a7267; font-size: 12px; margin-top: 40px; border-top: 1px solid #ddd; padding-top: 12px; }
+  .panel { background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+</style>
+</head>
+<body>
+<h1>Meal Log</h1>
+<p class="updated">Last updated: ${new Date().toLocaleString()}</p>
+
+<h2>Past 7 Days</h2>
+<div class="panel">${renderLogTableHtml(recent)}</div>
+
+<h2>Full History</h2>
+<div class="panel">${renderLogTableHtml(all)}</div>
+
+<h2>Current Meal List (${meals.length})</h2>
+<div class="panel">${mealListHtml}</div>
+
+<p class="hint">This file is the data store for Meal Planner.html. Keep it in the same folder and don't rename it or hand-edit the block below — the planner reads and rewrites it automatically.</p>
+
+<script type="application/json" id="meal-planner-data">
+${json}
+<\/script>
+</body>
+</html>`;
+  }
+
+  async function ensurePermission(requestIfNeeded) {
+    if (!fileHandle) return false;
+    const opts = { mode: 'readwrite' };
+    let perm = await fileHandle.queryPermission(opts);
+    if (perm === 'granted') return true;
+    if (!requestIfNeeded) return false;
+    try {
+      perm = await fileHandle.requestPermission(opts);
+    } catch (e) { return false; }
+    return perm === 'granted';
+  }
+
+  async function writeDataFile() {
+    if (!fileHandle) return;
+    const granted = await ensurePermission(false);
+    if (!granted) {
+      setFileStatus('needs-permission');
+      return;
+    }
+    try {
+      const html = buildDataFileHtml();
+      const writable = await fileHandle.createWritable();
+      await writable.write(html);
+      await writable.close();
+      setFileStatus('connected');
+    } catch (e) {
+      setFileStatus('error', 'Could not save: ' + e.message);
+    }
+  }
+
+  async function loadOrInitFromHandle() {
+    const file = await fileHandle.getFile();
+    const text = await file.text();
+    const parsed = parseEmbeddedData(text);
+    if (parsed && Array.isArray(parsed.meals)) {
+      meals = parsed.meals;
+      log = Array.isArray(parsed.log) ? parsed.log : [];
+      cooldownDays = (parsed.cooldownDays >= 1 && parsed.cooldownDays <= 7) ? parsed.cooldownDays : 3;
+    } else {
+      meals = DEFAULT_MEALS.map((name, i) => ({ id: i + 1, name }));
+      log = [];
+      cooldownDays = 3;
+      await writeDataFile();
+    }
+  }
+
+  async function connectDataFile() {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'Meal Log.html',
+        types: [{ description: 'HTML File', accept: { 'text/html': ['.html'] } }]
+      });
+      fileHandle = handle;
+      await idbSet(IDB_KEY, handle);
+      await loadOrInitFromHandle();
+      dirty = false;
+      persistCrashBackup();
+      setFileStatus('connected');
+      renderAll();
+    } catch (e) {
+      if (e.name !== 'AbortError') setFileStatus('error', 'Could not connect: ' + e.message);
+    }
+  }
+
+  async function reconnectPermission() {
+    if (!fileHandle) return;
+    const granted = await ensurePermission(true);
+    if (granted) {
+      await loadOrInitFromHandle();
+      dirty = false;
+      persistCrashBackup();
+      setFileStatus('connected');
+      renderAll();
+    } else {
+      setFileStatus('needs-permission');
+      renderFilePanel();
+    }
+  }
+
+  async function disconnectDataFile() {
+    fileHandle = null;
+    try { await idbDelete(IDB_KEY); } catch (e) {}
+    setFileStatus('disconnected');
+    renderAll();
+  }
+
+  let fileState = 'unsupported';
+  let fileErrorMsg = '';
+  function setFileStatus(state, msg) {
+    fileState = state;
+    fileErrorMsg = msg || '';
+    renderFilePanel();
+  }
+
+  function renderFilePanel() {
+    const textEl = document.getElementById('file-status-text');
+    const actionsEl = document.getElementById('file-actions');
+    const bannerEl = document.getElementById('file-banner');
+    actionsEl.innerHTML = '';
+    bannerEl.innerHTML = '';
+
+    const mkBtn = (label, cls, onClick) => {
+      const b = document.createElement('button');
+      b.className = 'btn ' + cls;
+      b.textContent = label;
+      b.addEventListener('click', onClick);
+      return b;
+    };
+
+    if (fileState === 'unsupported') {
+      textEl.innerHTML = '<span class="status-dot off"></span>Not supported in this browser';
+      bannerEl.innerHTML = '<div class="banner">This needs Chrome or Edge on a computer to save data automatically. Open <b>Meal Log.html</b> in this folder to view your meal history instead.</div>';
+    } else if (fileState === 'disconnected') {
+      textEl.innerHTML = '<span class="status-dot off"></span>No data file connected';
+      actionsEl.appendChild(mkBtn('Connect Data File', 'btn-primary', connectDataFile));
+    } else if (fileState === 'needs-permission') {
+      textEl.innerHTML = '<span class="status-dot warn"></span>Connected, needs permission';
+      actionsEl.appendChild(mkBtn('Reconnect', 'btn-primary', reconnectPermission));
+      actionsEl.appendChild(mkBtn('Forget File', 'btn-secondary', disconnectDataFile));
+    } else if (fileState === 'connected') {
+      const name = (fileHandle && fileHandle.name) ? fileHandle.name : 'Meal Log.html';
+      textEl.innerHTML = `<span class="status-dot ok"></span>Connected: <b>${escapeHtml(name)}</b> — saved automatically`;
+      actionsEl.appendChild(mkBtn('Forget File', 'btn-secondary', disconnectDataFile));
+    } else if (fileState === 'error') {
+      textEl.innerHTML = '<span class="status-dot warn"></span>Save error';
+      actionsEl.appendChild(mkBtn('Retry', 'btn-primary', () => writeDataFile()));
+      actionsEl.appendChild(mkBtn('Forget File', 'btn-secondary', disconnectDataFile));
+      bannerEl.innerHTML = `<div class="banner error">${escapeHtml(fileErrorMsg)}</div>`;
+    }
+  }
+
+  function removeMeal(id) {
+    const meal = meals.find(m => m.id === id);
+    if (!meal) return;
+    if (!confirm(`Remove "${meal.name}" from the meal list? Its log history stays intact.`)) return;
+    meals = meals.filter(m => m.id !== id);
+    afterMutation();
+  }
+
+  function pickCandidatePool(today) {
+    let eligible = meals.filter(m => isEligible(m, today));
+    let pool = eligible.filter(m => !sessionExcluded.has(m.id));
+    if (pool.length === 0) pool = eligible;
+    let relaxed = false;
+    if (pool.length === 0) {
+      relaxed = true;
+      const withDates = meals.map(m => ({ m, last: lastUsedDate(m.id) }));
+      withDates.sort((a, b) => {
+        if (!a.last && !b.last) return 0;
+        if (!a.last) return -1;
+        if (!b.last) return 1;
+        return a.last < b.last ? -1 : (a.last > b.last ? 1 : 0);
+      });
+      if (withDates.length) {
+        const oldestDate = withDates[0].last;
+        pool = withDates.filter(x => x.last === oldestDate).map(x => x.m);
+      }
+    }
+    return { pool, relaxed };
+  }
+
+  // Draw a candidate into preview -- NOT written to the log until commitPreview() runs.
+  function startPreview(excludeTodaysCommitted) {
+    if (meals.length === 0) { alert('Add at least one meal first.'); return; }
+    const today = todayStr();
+    if (excludeTodaysCommitted) {
+      const committed = log.find(e => e.date === today);
+      if (committed) sessionExcluded.add(committed.mealId);
+    }
+    const { pool, relaxed } = pickCandidatePool(today);
+    if (pool.length === 0) return;
+    previewPick = pool[Math.floor(Math.random() * pool.length)];
+    lastRelaxed = relaxed;
+    renderDrawPanel();
+  }
+
+  // Cycle to another candidate without touching the log.
+  function drawAgain() {
+    if (previewPick) sessionExcluded.add(previewPick.id);
+    startPreview(false);
+  }
+
+  // Write the currently-previewed meal to today's log entry.
+  function commitPreview() {
+    if (!previewPick) return;
+    const today = todayStr();
+    log = log.filter(e => e.date !== today);
+    log.push({ date: today, mealId: previewPick.id, mealName: previewPick.name });
+    previewPick = null;
+    sessionExcluded.clear();
+    afterMutation();
+  }
+
+  // Abandon the current preview and go back to whatever was showing before (a committed
+  // meal if one existed for today, or the empty "no pick yet" state otherwise).
+  function cancelPreview() {
+    previewPick = null;
+    sessionExcluded.clear();
+    renderDrawPanel();
+  }
+
+  function clearTodayPick() {
+    const today = todayStr();
+    log = log.filter(e => e.date !== today);
+    previewPick = null;
+    sessionExcluded.clear();
+    afterMutation();
+  }
+
+  async function afterMutation() {
+    renderAll();
+    if (fileHandle) {
+      await writeDataFile();
+      dirty = (fileState === 'error'); // fall back to manual save if auto-save failed
+    } else {
+      dirty = true;
+    }
+    persistCrashBackup();
+    renderSyncBanner();
+  }
+
+  function persistCrashBackup() {
+    try {
+      if (dirty) {
+        localStorage.setItem(BACKUP_KEY, JSON.stringify({ meals, log, cooldownDays, savedAt: new Date().toISOString() }));
+      } else {
+        localStorage.removeItem(BACKUP_KEY);
+      }
+    } catch (e) { /* storage unavailable or full - not critical, ignore */ }
+  }
+
+  function renderSyncBanner() {
+    const el = document.getElementById('sync-banner');
+    if (!el) return;
+    el.innerHTML = dirty
+      ? '<div class="banner">You have changes on this device that haven\'t been saved yet. Tap <b>Export Data File</b> to save them.</div>'
+      : '';
+  }
+
+  async function exportData() {
+    const html = buildDataFileHtml();
+    const filename = 'Meal Log.html';
+    const blob = new Blob([html], { type: 'text/html' });
+    let shared = false;
+    if (navigator.canShare) {
+      try {
+        const file = new File([blob], filename, { type: 'text/html' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'Meal Log' });
+          shared = true;
+        }
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // user cancelled the share sheet - leave state as-is
+        // otherwise fall through to the download fallback below
+      }
+    }
+    if (!shared) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+    dirty = false;
+    persistCrashBackup();
+    renderAll();
+  }
+
+  async function handleImportFile(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = parseEmbeddedData(text);
+      if (!parsed || !Array.isArray(parsed.meals)) {
+        alert("That doesn't look like a Meal Planner data file.");
+        return;
+      }
+      meals = parsed.meals;
+      log = Array.isArray(parsed.log) ? parsed.log : [];
+      cooldownDays = (parsed.cooldownDays >= 1 && parsed.cooldownDays <= 7) ? parsed.cooldownDays : 3;
+      sessionExcluded.clear();
+      lastRelaxed = false;
+      dirty = false;
+      persistCrashBackup();
+      renderAll();
+    } catch (err) {
+      alert('Could not read that file: ' + err.message);
+    } finally {
+      e.target.value = '';
+    }
+  }
+
+  function renderRecoveryBanner() {
+    const panel = document.getElementById('recovery-panel');
+    const el = document.getElementById('recovery-banner');
+    let backup = null;
+    try {
+      const raw = localStorage.getItem(BACKUP_KEY);
+      if (raw) backup = JSON.parse(raw);
+    } catch (e) { backup = null; }
+
+    if (!backup || !Array.isArray(backup.meals)) {
+      panel.style.display = 'none';
+      el.innerHTML = '';
+      return;
+    }
+
+    panel.style.display = '';
+    const when = backup.savedAt ? new Date(backup.savedAt).toLocaleString() : 'a previous session';
+    el.innerHTML = `<div class="banner">Found unsaved changes on this device from ${escapeHtml(when)}. Restore them, or discard and start from your last import/connect?</div>`;
+    const restoreBtn = document.createElement('button');
+    restoreBtn.className = 'btn btn-primary';
+    restoreBtn.textContent = 'Restore';
+    restoreBtn.addEventListener('click', () => {
+      meals = backup.meals;
+      log = Array.isArray(backup.log) ? backup.log : [];
+      cooldownDays = (backup.cooldownDays >= 1 && backup.cooldownDays <= 7) ? backup.cooldownDays : 3;
+      dirty = true;
+      panel.style.display = 'none';
+      renderAll();
+    });
+    const discardBtn = document.createElement('button');
+    discardBtn.className = 'btn btn-secondary';
+    discardBtn.textContent = 'Discard';
+    discardBtn.addEventListener('click', () => {
+      try { localStorage.removeItem(BACKUP_KEY); } catch (e) {}
+      panel.style.display = 'none';
+    });
+    el.appendChild(restoreBtn);
+    el.appendChild(discardBtn);
+  }
+
+  function renderDrawPanel() {
+    const today = todayStr();
+    const todaysEntry = log.find(e => e.date === today);
+    const slot = document.getElementById('today-card-slot');
+    const buttons = document.getElementById('draw-buttons');
+    const note = document.getElementById('draw-note');
+    const banner = document.getElementById('draw-note-banner');
+    slot.innerHTML = '';
+    buttons.innerHTML = '';
+    banner.innerHTML = '';
+
+    if (previewPick) {
+      const label = document.createElement('div');
+      label.textContent = 'PREVIEWING — NOT LOGGED YET';
+      label.style.cssText = 'font-size:11px;font-weight:700;letter-spacing:0.5px;color:#b5342b;text-align:center;margin-bottom:6px;';
+      const wrap = document.createElement('div');
+      wrap.appendChild(label);
+      wrap.appendChild(buildCardEl(previewPick, { big: true, ignoreAvailability: true }));
+      slot.appendChild(wrap);
+
+      const drawAgainBtn = document.createElement('button');
+      drawAgainBtn.className = 'btn btn-secondary';
+      drawAgainBtn.textContent = 'Draw Again';
+      drawAgainBtn.addEventListener('click', drawAgain);
+      buttons.appendChild(drawAgainBtn);
+
+      const commitBtn = document.createElement('button');
+      commitBtn.className = 'btn btn-primary';
+      commitBtn.textContent = 'Log This Meal';
+      commitBtn.addEventListener('click', commitPreview);
+      buttons.appendChild(commitBtn);
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.className = 'btn btn-secondary';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.addEventListener('click', cancelPreview);
+      buttons.appendChild(cancelBtn);
+
+      note.textContent = 'Keep drawing until you like one, then tap Log This Meal to save it for ' + formatDisplayDate(today) + '.';
+    } else if (todaysEntry) {
+      const meal = meals.find(m => m.id === todaysEntry.mealId) || { id: todaysEntry.mealId, name: todaysEntry.mealName };
+      const card = buildCardEl(meal, { big: true, ignoreAvailability: true });
+      slot.appendChild(card);
+
+      const redrawBtn = document.createElement('button');
+      redrawBtn.className = 'btn btn-secondary';
+      redrawBtn.textContent = 'Redraw';
+      redrawBtn.addEventListener('click', () => startPreview(true));
+      buttons.appendChild(redrawBtn);
+
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'btn btn-danger';
+      clearBtn.textContent = 'Clear today’s pick';
+      clearBtn.addEventListener('click', clearTodayPick);
+      buttons.appendChild(clearBtn);
+
+      note.textContent = `Logged for ${formatDisplayDate(today)}.`;
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'card big';
+      placeholder.style.display = 'flex';
+      placeholder.style.alignItems = 'center';
+      placeholder.style.justifyContent = 'center';
+      placeholder.style.color = '#bbb';
+      placeholder.style.fontSize = '13px';
+      placeholder.textContent = 'No pick yet';
+      slot.appendChild(placeholder);
+
+      const drawBtn = document.createElement('button');
+      drawBtn.className = 'btn btn-primary';
+      drawBtn.textContent = 'Draw a Meal';
+      drawBtn.disabled = meals.length === 0;
+      drawBtn.addEventListener('click', () => startPreview(false));
+      buttons.appendChild(drawBtn);
+
+      note.textContent = meals.length === 0
+        ? 'Add a meal to the list first.'
+        : 'Picks randomly from meals not used in the last ' + cooldownDays + ' day' + (cooldownDays === 1 ? '' : 's') + '.';
+    }
+
+    if (lastRelaxed && (previewPick || todaysEntry)) {
+      banner.innerHTML = '<div class="banner">Every meal was used within your cooldown window, so this pick relaxes the rule and uses the one that’s gone longest without a repeat.</div>';
+    }
+  }
+
+  function renderSettings() {
+    const slider = document.getElementById('cooldown-slider');
+    slider.value = cooldownDays;
+    document.getElementById('cooldown-val-text').textContent = cooldownDays;
+    document.getElementById('cooldown-plural').textContent = cooldownDays === 1 ? '' : 's';
+  }
+
+  function renderDeck() {
+    const grid = document.getElementById('deck-grid');
+    grid.innerHTML = '';
+    const today = todayStr();
+    const eligibleCount = meals.filter(m => isEligible(m, today)).length;
+    document.getElementById('deck-stats').innerHTML =
+      `<span><b>${meals.length}</b> meals total</span><span><b>${eligibleCount}</b> available today</span>`;
+    meals.forEach(meal => {
+      const el = buildCardEl(meal, { showDelete: true, showAvailability: true });
+      grid.appendChild(el);
+    });
+  }
+
+  function renderLogs() {
+    const today = todayStr();
+    const recent = log
+      .filter(e => daysBetween(e.date, today) <= 6 && daysBetween(e.date, today) >= 0)
+      .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+    const recentEl = document.getElementById('recent-log');
+    recentEl.innerHTML = recent.length === 0
+      ? '<div class="log-empty">No meals logged in the past 7 days yet.</div>'
+      : renderLogTable(recent);
+
+    const fullEl = document.getElementById('full-log');
+    const all = log.slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+    fullEl.innerHTML = all.length ? renderLogTable(all) : '<div class="log-empty">No history yet.</div>';
+  }
+
+  function renderLogTable(entries) {
+    let rows = entries.map(e =>
+      `<tr><td class="date-col">${formatDisplayDate(e.date)}</td><td>${escapeHtml(e.mealName)}</td></tr>`
+    ).join('');
+    return `<table class="log-table"><thead><tr><th>Date</th><th>Meal</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  function renderAll() {
+    renderDrawPanel();
+    renderSettings();
+    renderDeck();
+    renderLogs();
+    renderFilePanel();
+    renderSyncBanner();
+  }
+
+  // ---- event wiring ----
+  document.getElementById('cooldown-slider').addEventListener('input', (e) => {
+    cooldownDays = parseInt(e.target.value, 10);
+    afterMutation();
+  });
+
+  document.getElementById('add-meal-btn').addEventListener('click', addMealFromInput);
+  document.getElementById('new-meal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addMealFromInput();
+  });
+
+  function addMealFromInput() {
+    const input = document.getElementById('new-meal-input');
+    const name = input.value.trim();
+    if (!name) return;
+    const dupe = meals.some(m => m.name.toLowerCase() === name.toLowerCase());
+    if (dupe) { alert('That meal is already on the list.'); return; }
+    const nextId = meals.length ? Math.max(...meals.map(m => m.id)) + 1 : 1;
+    meals.push({ id: nextId, name });
+    input.value = '';
+    afterMutation();
+  }
+
+  document.getElementById('export-btn').addEventListener('click', exportData);
+  document.getElementById('import-btn').addEventListener('click', () => {
+    document.getElementById('import-file-input').click();
+  });
+  document.getElementById('import-file-input').addEventListener('change', handleImportFile);
+
+  // ---- startup ----
+  async function init() {
+    // Show the seeded/default list right away so the app is usable instantly,
+    // then check for a local crash backup and attempt to auto-reconnect (desktop only).
+    renderAll();
+    renderRecoveryBanner();
+
+    if (!FS_SUPPORTED) {
+      setFileStatus('unsupported');
+      return;
+    }
+    let handle = null;
+    try { handle = await idbGet(IDB_KEY); } catch (e) { handle = null; }
+    if (!handle) {
+      setFileStatus('disconnected');
+      return;
+    }
+    fileHandle = handle;
+    const granted = await ensurePermission(false);
+    if (granted) {
+      try {
+        await loadOrInitFromHandle();
+        dirty = false;
+        persistCrashBackup();
+        setFileStatus('connected');
+      } catch (e) {
+        setFileStatus('error', 'Could not read file: ' + e.message);
+      }
+    } else {
+      setFileStatus('needs-permission');
+    }
+    renderAll();
+  }
+
+  init();
+})();
+</script>
+
+</body>
+</html>
