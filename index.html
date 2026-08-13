@@ -119,6 +119,7 @@
     flex-direction: column;
     justify-content: space-between;
     flex-shrink: 0;
+    overflow: hidden;
     transition: opacity .2s, filter .2s;
   }
   .card.big { width: 240px; height: 336px; }
@@ -244,16 +245,14 @@
   @media (max-width: 480px) {
     main { padding: 0 12px; }
     section.panel { padding: 16px; }
-    .draw-area { gap: 16px; }
+    .draw-area { gap: 16px; justify-content: center; }
     .card.big {
       width: 100%;
-      flex-basis: 100%;
       max-width: 380px;
-      height: auto;
-      aspect-ratio: 5 / 7;
+      height: 420px;
     }
     .deck-grid { grid-template-columns: 1fr; }
-    .deck-grid .card { height: auto; aspect-ratio: 5 / 6; }
+    .deck-grid .card { height: 280px; margin: 0 auto; }
     .card .meal-name { font-size: 17px; }
     .card.big .meal-name { font-size: 19px; }
   }
