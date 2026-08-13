@@ -146,11 +146,14 @@
     opacity: 0.08;
   }
   .card .meal-name {
-    font-size: 13px;
-    line-height: 1.35;
+    font-size: 15px;
+    line-height: 1.4;
     color: #2b2b2b;
     position: relative;
     z-index: 1;
+  }
+  .card.big .meal-name {
+    font-size: 17px;
   }
   .card.unavailable { opacity: 0.4; filter: grayscale(60%); }
   .card .avail-note {
@@ -237,6 +240,23 @@
     flex-wrap: wrap;
   }
   .stat-row b { color: var(--ink); }
+
+  @media (max-width: 480px) {
+    main { padding: 0 12px; }
+    section.panel { padding: 16px; }
+    .draw-area { gap: 16px; }
+    .card.big {
+      width: 100%;
+      flex-basis: 100%;
+      max-width: 380px;
+      height: auto;
+      aspect-ratio: 5 / 7;
+    }
+    .deck-grid { grid-template-columns: 1fr; }
+    .deck-grid .card { height: auto; aspect-ratio: 5 / 6; }
+    .card .meal-name { font-size: 17px; }
+    .card.big .meal-name { font-size: 19px; }
+  }
 </style>
 </head>
 <body>
@@ -251,27 +271,6 @@
   <section class="panel" id="recovery-panel" style="display:none;">
     <h2>Recovered Changes</h2>
     <div id="recovery-banner"></div>
-  </section>
-
-  <section class="panel" id="sync-panel">
-    <h2>Save Your Data</h2>
-    <div id="sync-banner"></div>
-    <div class="add-row">
-      <button class="btn btn-primary" id="export-btn">Export Data File</button>
-      <button class="btn btn-secondary" id="import-btn">Import Data File</button>
-      <input type="file" id="import-file-input" accept=".html,text/html" style="display:none;">
-    </div>
-    <p class="file-note">Works in any browser, including iPhone. <b>Export</b> saves (or shares to Google Drive) a copy of your meals and log. <b>Import</b> loads a previously exported file back in. Use the same filename each time — for example, save it over <b>Meal Log.html</b> in this folder — so you're always continuing the same running log.</p>
-  </section>
-
-  <section class="panel" id="file-panel">
-    <h2>Auto-Save (Chrome/Edge on a computer)</h2>
-    <div class="file-status-row">
-      <span id="file-status-text" class="status-text"></span>
-      <span id="file-actions"></span>
-    </div>
-    <div id="file-banner"></div>
-    <p class="file-note">Optional. When connected, this saves to <b>Meal Log.html</b> automatically after every change — no need to Export. Not available on iPhone; use Import/Export above instead.</p>
   </section>
 
   <section class="panel" id="draw-panel">
@@ -301,6 +300,27 @@
       <input type="text" id="new-meal-input" placeholder="e.g. Shrimp tacos with cabbage slaw">
       <button class="btn btn-primary" id="add-meal-btn">Add to List</button>
     </div>
+  </section>
+
+  <section class="panel" id="sync-panel">
+    <h2>Save Your Data</h2>
+    <div id="sync-banner"></div>
+    <div class="add-row">
+      <button class="btn btn-primary" id="export-btn">Export Data File</button>
+      <button class="btn btn-secondary" id="import-btn">Import Data File</button>
+      <input type="file" id="import-file-input" accept=".html,text/html" style="display:none;">
+    </div>
+    <p class="file-note">Works in any browser, including iPhone. <b>Export</b> saves (or shares to Google Drive) a copy of your meals and log. <b>Import</b> loads a previously exported file back in. Use the same filename each time — for example, save it over <b>Meal Log.html</b> in this folder — so you're always continuing the same running log.</p>
+  </section>
+
+  <section class="panel" id="file-panel">
+    <h2>Auto-Save (Chrome/Edge on a computer)</h2>
+    <div class="file-status-row">
+      <span id="file-status-text" class="status-text"></span>
+      <span id="file-actions"></span>
+    </div>
+    <div id="file-banner"></div>
+    <p class="file-note">Optional. When connected, this saves to <b>Meal Log.html</b> automatically after every change — no need to Export. Not available on iPhone; use Import/Export above instead.</p>
   </section>
 
   <section class="panel" id="deck-panel">
